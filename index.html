@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de Resultados — Elite Mídias</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #f0ead6;
+      --text-muted: #7a7060;
+
+      /* Modo Simulação — Dourado */
+      --gold: #d4a017;
+      --gold-bright: #f0c040;
+      --gold-dim: #1a1400;
+      --gold-mid: #2a2000;
+      --border-gold: #b8952a;
+
+      /* Modo Real — Azul */
+      --blue: #4a9eff;
+      --blue-bright: #7ab8ff;
+      --blue-dim: #061220;
+      --blue-mid: #0a1e35;
+      --border-blue: #2a5a8a;
+
+      --red: #d94f4f;
+      --red-dim: #2a0f0f;
+
+      /* Acento ativo — troca com o modo */
+      --accent: var(--gold);
+      --accent-bright: var(--gold-bright);
+      --accent-dim: var(--gold-dim);
+      --accent-mid: var(--gold-mid);
+      --border-accent: var(--border-gold);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 32px 16px 0;
+      overflow-x: hidden;
+    }
+    *, *::before, *::after { max-width: 100%; }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 28px; }
+    .logo-wrap {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 16px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 18px; color: #0a0a0a;
+    }
+    .logo-text { font-size: 20px; font-weight: 800; letter-spacing: 1px; color: var(--gold-bright); }
+    .gold-line {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 16px auto;
+    }
+    header h1 {
+      font-size: clamp(18px, 3.5vw, 26px); font-weight: 800;
+      line-height: 1.2; color: #fff;
+    }
+
+    /* ── Mode Toggle ── */
+    .mode-toggle-wrap {
+      max-width: 480px;
+      margin: 0 auto 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 6px;
+      display: flex;
+      gap: 4px;
+      position: relative;
+      z-index: 10;
+    }
+    .mode-btn {
+      flex: 1;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all .25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--text-muted);
+    }
+    .mode-btn .mode-icon { font-size: 16px; }
+    .mode-btn .mode-label { line-height: 1.2; text-align: left; }
+    .mode-btn .mode-label strong { display: block; font-size: 13px; }
+    .mode-btn .mode-label span { font-size: 10px; font-weight: 500; letter-spacing: 0; opacity: .7; }
+
+    .mode-btn.sim.active {
+      background: linear-gradient(135deg, var(--gold-dim) 0%, var(--gold-mid) 100%);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright);
+    }
+    .mode-btn.real.active {
+      background: linear-gradient(135deg, var(--blue-dim) 0%, var(--blue-mid) 100%);
+      border: 1px solid var(--border-blue);
+      color: var(--blue-bright);
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid; grid-template-columns: 1fr;
+      gap: 24px; max-width: 1100px; margin: 0 auto;
+    }
+    @media (min-width: 800px) { .layout { grid-template-columns: 420px 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+      transition: border-color .3s;
+    }
+    .card + .card { margin-top: 14px; }
+    .card-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+      transition: color .3s;
+    }
+    .card-title .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      flex-shrink: 0; transition: background .3s;
+    }
+
+    /* acento dinâmico por modo */
+    body.modo-sim .card-title { color: var(--gold); }
+    body.modo-sim .card-title .dot { background: var(--gold); }
+    body.modo-sim input[type="number"]:focus { border-color: var(--gold); }
+    body.modo-sim .input-prefix, body.modo-sim .input-suffix { color: var(--gold); }
+    body.modo-sim input[type="range"]::-webkit-slider-thumb { background: var(--gold); }
+    body.modo-sim .toggle-mode button.active { background: var(--gold); color: #0a0a0a; }
+
+    body.modo-real .card-title { color: var(--blue); }
+    body.modo-real .card-title .dot { background: var(--blue); }
+    body.modo-real input[type="number"]:focus { border-color: var(--blue); }
+    body.modo-real .input-prefix, body.modo-real .input-suffix { color: var(--blue); }
+    body.modo-real input[type="range"]::-webkit-slider-thumb { background: var(--blue); }
+    body.modo-real .toggle-mode button.active { background: var(--blue); color: #fff; }
+
+    /* ── Form Fields ── */
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block; font-size: 10px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 6px;
+    }
+    .input-wrap { position: relative; display: flex; align-items: center; }
+    .input-prefix {
+      position: absolute; left: 12px; font-size: 12px; font-weight: 700;
+      pointer-events: none; transition: color .3s;
+    }
+    .input-suffix {
+      position: absolute; right: 12px; font-size: 12px; font-weight: 700;
+      pointer-events: none; transition: color .3s;
+    }
+    input[type="number"] {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 15px; font-weight: 600;
+      padding: 10px 12px; outline: none;
+      transition: border-color .2s; -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .has-prefix input[type="number"] { padding-left: 32px; }
+    .has-suffix input[type="number"] { padding-right: 32px; }
+
+    /* ── Slider row ── */
+    .slider-row { display: flex; align-items: center; gap: 8px; }
+    .slider-row input[type="number"] {
+      width: 64px; flex-shrink: 0; text-align: center; padding: 10px 4px;
+    }
+    .slider-row input[type="range"] { min-width: 0; }
+    input[type="range"] {
+      flex: 1; -webkit-appearance: none; appearance: none; height: 3px;
+      border-radius: 4px; background: var(--border); outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; cursor: pointer;
+      transition: transform .15s; box-shadow: 0 0 6px rgba(212,160,23,.4);
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* ── Funil Real (modo análise) ── */
+    .funil-real-inputs { display: flex; flex-direction: column; gap: 0; }
+    .funil-real-step {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .funil-real-connector {
+      display: flex; align-items: center; justify-content: center;
+      padding: 3px 0 3px 19px; /* alinha com centro do input */
+    }
+    .funil-real-connector .arrow-down {
+      width: 1px; height: 20px;
+      background: var(--border); position: relative;
+    }
+    .funil-real-connector .arrow-down::after {
+      content: '▼';
+      position: absolute; bottom: -10px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px; color: var(--border);
+    }
+    .funil-real-step-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .funil-real-step .field { flex: 1; margin-bottom: 0; }
+
+    /* ── Results ── */
+    .results { display: flex; flex-direction: column; gap: 14px; }
+
+    /* Badge de modo no resultado */
+    .result-mode-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 3px 10px;
+      border-radius: 20px; margin-bottom: 8px;
+      transition: all .3s;
+    }
+    body.modo-sim .result-mode-badge {
+      background: var(--gold-dim); color: var(--gold); border: 1px solid var(--border-gold);
+    }
+    body.modo-real .result-mode-badge {
+      background: var(--blue-dim); color: var(--blue); border: 1px solid var(--border-blue);
+    }
+
+    /* Big card */
+    .big-card {
+      border-radius: 12px; padding: 24px; text-align: center;
+      position: relative; overflow: hidden; transition: border-color .3s, background .3s;
+      z-index: 0;
+    }
+    body.modo-sim .big-card {
+      background: linear-gradient(135deg, #1a1400 0%, #0a0a00 100%);
+      border: 1px solid var(--border-gold);
+    }
+    body.modo-real .big-card {
+      background: linear-gradient(135deg, #061220 0%, #030810 100%);
+      border: 1px solid var(--border-blue);
+    }
+    .big-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; transition: background .3s;
+    }
+    body.modo-sim .big-card::before {
+      background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+    }
+    body.modo-real .big-card::before {
+      background: linear-gradient(90deg, transparent, var(--blue-bright), transparent);
+    }
+    .big-card .label {
+      font-size: 10px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 8px; transition: color .3s;
+    }
+    body.modo-sim .big-card .label { color: var(--gold); }
+    body.modo-real .big-card .label { color: var(--blue); }
+
+    .big-card .value {
+      font-size: clamp(26px, 5vw, 38px); font-weight: 900;
+      line-height: 1; transition: color .3s;
+    }
+    body.modo-sim .big-card .value { color: var(--gold-bright); }
+    body.modo-real .big-card .value { color: var(--blue-bright); }
+
+    .big-card .sub {
+      margin-top: 14px; display: flex; justify-content: center;
+      gap: 28px; padding-top: 14px; transition: border-color .3s;
+    }
+    body.modo-sim .big-card .sub { border-top: 1px solid #2a2000; }
+    body.modo-real .big-card .sub { border-top: 1px solid #0a1e35; }
+
+    .big-card .sub-item { text-align: center; }
+    .big-card .sub-item .sl { font-size: 10px; color: var(--text-muted); letter-spacing: .5px; }
+    .big-card .sub-item .sv { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 2px; }
+
+    /* Funil output */
+    .funil-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px;
+    }
+    .funil-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 14px; transition: color .3s;
+    }
+    body.modo-sim .funil-title { color: var(--gold); }
+    body.modo-real .funil-title { color: var(--blue); }
+
+    .funil-steps { display: flex; align-items: center; gap: 4px; overflow: hidden; }
+    .funil-step { text-align: center; flex: 1; min-width: 0; }
+    .funil-step .fs-label {
+      font-size: 9px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
+    }
+    .funil-step .fs-value { font-size: clamp(13px, 3.5vw, 17px); font-weight: 800; color: var(--text); }
+    .funil-arrow { font-size: 16px; opacity: .5; transition: color .3s; }
+    body.modo-sim .funil-arrow { color: var(--gold); }
+    body.modo-real .funil-arrow { color: var(--blue); }
+
+    /* CAC/ROAS grid */
+    .cac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+    .cac-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px;
+    }
+    .cac-item .cl {
+      font-size: 9px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .cac-item .cv {
+      font-size: 17px; font-weight: 800; transition: color .3s;
+    }
+    body.modo-sim .cac-item .cv { color: var(--gold); }
+    body.modo-real .cac-item .cv { color: var(--blue); }
+
+    /* ROAS card */
+    .roas-card {
+      border-radius: 10px; padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      grid-column: 1 / -1; transition: background .3s, border-color .3s;
+    }
+    .roas-card .rl { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+    .roas-card .rsub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .roas-card .rv { font-size: 32px; font-weight: 900; transition: color .3s; }
+
+    /* CPL real (só aparece no modo real) */
+    .cpl-real-item { display: none; }
+    body.modo-real .cpl-real-item { display: block; }
+
+    /* ── Separação visual INPUT vs OUTPUT ── */
+    /* Labels de seção no topo de cada coluna */
+    .col-section-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; padding: 5px 10px;
+      border-radius: 20px; display: inline-flex;
+      align-items: center; gap: 5px; margin-bottom: 12px;
+    }
+    .col-section-label.input-lbl {
+      color: var(--text-muted); background: var(--surface2);
+      border: 1px dashed var(--border);
+    }
+    .col-section-label.input-lbl::before { content: '✎'; font-size: 11px; }
+    .col-section-label.output-lbl {
+      border: 1px solid var(--border-accent);
+    }
+    body.modo-sim .col-section-label.output-lbl {
+      color: var(--gold); background: var(--gold-dim);
+    }
+    body.modo-real .col-section-label.output-lbl {
+      color: var(--blue); background: var(--blue-dim);
+    }
+    .col-section-label.output-lbl::before { content: '⚡'; font-size: 11px; }
+
+    /* Inputs com borda tracejada para indicar editabilidade */
+    .inputs-col input[type="number"],
+    .inputs-col input[type="date"] {
+      border-style: dashed;
+    }
+    .inputs-col input[type="number"]:focus,
+    .inputs-col input[type="date"]:focus {
+      border-style: solid;
+    }
+
+    /* Glow sutil nos cards de resultado */
+    body.modo-sim .results .big-card,
+    body.modo-sim .results .funil-card,
+    body.modo-sim .results .cac-item {
+      box-shadow: 0 0 0 1px rgba(212,160,23,0.08);
+    }
+    body.modo-real .results .big-card,
+    body.modo-real .results .funil-card,
+    body.modo-real .results .cac-item {
+      box-shadow: 0 0 0 1px rgba(74,158,255,0.08);
+    }
+
+    /* ── Período (modo real) ── */
+    .periodo-card {
+      background: var(--blue-dim); border: 1px solid var(--border-blue);
+      border-radius: 10px; padding: 12px;
+    }
+    .periodo-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .periodo-icon { font-size: 16px; }
+    .periodo-dias-inline {
+      font-size: 12px; font-weight: 700; color: var(--blue-bright);
+    }
+    .periodo-inputs {
+      display: flex; align-items: flex-end; gap: 8px;
+    }
+    .periodo-field { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .periodo-sublabel {
+      font-size: 9px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--blue);
+    }
+    .periodo-separator {
+      color: var(--border-blue); font-size: 18px; font-weight: 700;
+      padding-bottom: 10px; line-height: 1;
+    }
+    input[type="date"] {
+      width: 100%; background: var(--surface2);
+      border: 1px dashed var(--border-blue); border-radius: 8px;
+      color: var(--text); font-size: 14px; font-weight: 600;
+      padding: 10px 12px; outline: none;
+      transition: border-color .2s;
+      color-scheme: dark;
+    }
+    input[type="date"]:focus { border-color: var(--blue); border-style: solid; }
+
+    /* ── Botão Gerar PDF ── */
+    .pdf-section {
+      max-width: 1100px; margin: 32px auto 0;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .pdf-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #222 100%);
+      border: 1px solid var(--border-gold);
+      color: var(--gold-bright); font-weight: 800; font-size: 14px;
+      letter-spacing: .5px; padding: 14px 32px; border-radius: 8px;
+      cursor: pointer; transition: all .2s;
+    }
+    body.modo-real .pdf-btn { border-color: var(--border-blue); color: var(--blue-bright); }
+    .pdf-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(212,160,23,.2); }
+    body.modo-real .pdf-btn:hover { box-shadow: 0 4px 20px rgba(74,158,255,.2); }
+    .pdf-btn svg { width: 18px; height: 18px; }
+    .pdf-hint { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Modal de dados do relatório ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.8); z-index: 1000;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border-gold);
+      border-radius: 16px; padding: 28px; width: 100%; max-width: 420px;
+      position: relative;
+    }
+    body.modo-real .modal { border-color: var(--border-blue); }
+    .modal h2 {
+      font-size: 16px; font-weight: 800; color: var(--gold-bright); margin-bottom: 20px;
+    }
+    body.modo-real .modal h2 { color: var(--blue-bright); }
+    .modal .field label { color: var(--text-muted); }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; color: var(--text-muted);
+      font-size: 20px; cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-cancel {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-muted); font-weight: 700; font-size: 13px;
+      padding: 12px; border-radius: 8px; cursor: pointer;
+    }
+    .modal-generate {
+      flex: 2; background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
+      border: none; color: #0a0a0a; font-weight: 800; font-size: 13px;
+      padding: 12px; border-radius: 8px; cursor: pointer; transition: opacity .2s;
+    }
+    body.modo-real .modal-generate {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-bright) 100%);
+      color: #fff;
+    }
+    .modal-generate:hover { opacity: .9; }
+    .modal-generating {
+      text-align: center; padding: 20px 0;
+      color: var(--text-muted); font-size: 13px; display: none;
+    }
+
+    /* ── Footer / CTA ── */
+    footer {
+      margin-top: 48px; background: var(--surface);
+      border-top: 1px solid var(--border-gold); padding: 32px 16px 40px;
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 20px; text-align: center;
+    }
+    .footer-cta-text { font-size: clamp(16px, 3vw, 22px); font-weight: 700; color: #fff; line-height: 1.4; }
+    .footer-cta-text span { color: var(--gold-bright); }
+    .footer-cta-sub { font-size: 13px; color: var(--text-muted); margin-top: -8px; }
+    .cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
+      color: #0a0a0a; font-weight: 800; font-size: 14px; letter-spacing: .5px;
+      text-decoration: none; padding: 14px 28px; border-radius: 8px;
+      transition: opacity .2s, transform .15s;
+    }
+    .cta-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .cta-btn svg { width: 18px; height: 18px; }
+    .footer-links {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 20px; font-size: 13px; color: var(--text-muted);
+    }
+    .footer-links a { color: var(--text-muted); text-decoration: none; transition: color .15s; }
+    .footer-links a:hover { color: var(--gold); }
+    .footer-copy { font-size: 11px; color: #3a3020; letter-spacing: .5px; }
+
+    /* Desktop: inputs à esquerda (col 1), resultados à direita (col 2)
+       No DOM: results vem primeiro, inputs depois — invertemos via grid-column */
+    @media (min-width: 800px) {
+      .results    { grid-column: 2; grid-row: 1; }
+      .inputs-col { grid-column: 1; grid-row: 1; }
+    }
+  </style>
+</head>
+<body class="modo-sim">
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo-wrap">
+    <div class="logo-icon">E</div>
+    <div class="logo-text">ELITE MÍDIAS</div>
+  </div>
+  <div class="gold-line"></div>
+  <h1 id="page-title">Simule os resultados do seu funil</h1>
+</header>
+
+<!-- ── MODE TOGGLE ── -->
+<div class="mode-toggle-wrap">
+  <button id="btn-sim" class="mode-btn sim active" onclick="setModo('sim')">
+    <span class="mode-icon">📊</span>
+    <span class="mode-label">
+      <strong>Simulação</strong>
+      <span>Projete resultados futuros</span>
+    </span>
+  </button>
+  <button id="btn-real" class="mode-btn real" onclick="setModo('real')">
+    <span class="mode-icon">📋</span>
+    <span class="mode-label">
+      <strong>Análise Real</strong>
+      <span>Dados reais do seu CRM</span>
+    </span>
+  </button>
+</div>
+
+<div class="layout">
+
+  <!-- ── RESULTADOS (primeiro no DOM = primeiro no mobile) ── -->
+  <div class="results">
+    <div class="col-section-label output-lbl">Resultados Calculados</div>
+
+    <div class="big-card">
+      <div style="display:flex;justify-content:center">
+        <div class="result-mode-badge" id="result-badge">📊 Projeção</div>
+      </div>
+      <div class="label" id="fat-label">Faturamento Estimado</div>
+      <div class="value" id="faturamento">R$ 0,00</div>
+      <div class="sub">
+        <div class="sub-item">
+          <div class="sl">Receita Consultas</div>
+          <div class="sv" id="receitaConsultas">R$ 0</div>
+        </div>
+        <div class="sub-item">
+          <div class="sl">Receita Procedimentos</div>
+          <div class="sv" id="receitaProcedimentos">R$ 0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="funil-card">
+      <div class="funil-title">Funil de Conversão</div>
+      <div class="funil-steps">
+        <div class="funil-step">
+          <div class="fs-label">Leads</div>
+          <div class="fs-value" id="leadsTotal">0</div>
+        </div>
+        <div class="funil-arrow">›</div>
+        <div class="funil-step">
+          <div class="fs-label">Qualif.</div>
+          <div class="fs-value" id="leadsQualif">0</div>
+        </div>
+        <div class="funil-arrow">›</div>
+        <div class="funil-step">
+          <div class="fs-label">Agenda.</div>
+          <div class="fs-value" id="agendamentos">0</div>
+        </div>
+        <div class="funil-arrow">›</div>
+        <div class="funil-step">
+          <div class="fs-label">Atend.</div>
+          <div class="fs-value" id="atendimentos">0</div>
+        </div>
+        <div class="funil-arrow">›</div>
+        <div class="funil-step">
+          <div class="fs-label">Vendas</div>
+          <div class="fs-value" id="vendas">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cac-grid">
+      <!-- CPL Real — só no modo real -->
+      <div class="cac-item cpl-real-item">
+        <div class="cl">CPL Real</div>
+        <div class="cv" id="cplReal">R$ 0</div>
+      </div>
+
+      <div class="cac-item" id="cac-leadqual-wrap">
+        <div class="cl">Custo / Lead Qual.</div>
+        <div class="cv" id="cacLeadQual">R$ 0</div>
+      </div>
+      <div class="cac-item">
+        <div class="cl">CAC Agendamento</div>
+        <div class="cv" id="cacAgendamento">R$ 0</div>
+      </div>
+      <div class="cac-item">
+        <div class="cl">CAC Vendas</div>
+        <div class="cv" id="cacVendas">R$ 0</div>
+      </div>
+
+      <div class="cac-item roas-card" id="roasCard">
+        <div>
+          <div class="rl" id="roas-label">Retorno S/ Investimento</div>
+          <div class="rsub" id="roas-sub">ROAS Projetado</div>
+        </div>
+        <div class="rv" id="roas">0x</div>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+
+  <!-- ── INPUTS (segundo no DOM = segundo no mobile, após resultados) ── -->
+  <div class="inputs-col">
+    <div class="col-section-label input-lbl">Dados de Entrada</div>
+
+    <!-- AQUISIÇÃO -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Aquisição</div>
+
+      <div class="field">
+        <label>Investimento em Anúncios</label>
+        <div class="input-wrap has-prefix">
+          <span class="input-prefix">R$</span>
+          <input type="number" id="investimento" value="10000" min="0" step="100" oninput="calcular()">
+        </div>
+      </div>
+
+      <!-- Simulação: CPL + Qualificação -->
+      <div id="sim-aquisicao">
+        <div class="field">
+          <label>Custo por Lead (CPL)</label>
+          <div class="input-wrap has-prefix">
+            <span class="input-prefix">R$</span>
+            <input type="number" id="cpl" value="10" min="0.01" step="1" oninput="calcular()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Qualificação</label>
+          <div class="slider-row">
+            <input type="range" id="qualificacao_range" min="1" max="100" value="20" oninput="syncSlider('qualificacao')">
+            <div class="input-wrap has-suffix">
+              <input type="number" id="qualificacao" value="20" min="1" max="100" step="1" oninput="syncRange('qualificacao'); calcular()">
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real: Período + Leads totais gerados -->
+      <div id="real-aquisicao" style="display:none">
+        <div class="field">
+          <label>Período de Análise</label>
+          <div class="periodo-card">
+            <div class="periodo-header">
+              <span class="periodo-icon">📅</span>
+              <span class="periodo-dias-inline" id="periodo-dias-label">Selecione as datas</span>
+            </div>
+            <div class="periodo-inputs">
+              <div class="periodo-field">
+                <span class="periodo-sublabel">De</span>
+                <input type="date" id="r_data_inicio" oninput="calcularDias(); calcular()">
+              </div>
+              <div class="periodo-separator">→</div>
+              <div class="periodo-field">
+                <span class="periodo-sublabel">Até</span>
+                <input type="date" id="r_data_fim" oninput="calcularDias(); calcular()">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Leads Totais Gerados</label>
+          <div class="input-wrap">
+            <input type="number" id="r_leads" value="" min="0" step="1" placeholder="Ex: 1000 leads" oninput="calcular()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMERCIAL -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Comercial</div>
+
+      <div class="field">
+        <label>Valor da Consulta</label>
+        <div class="input-wrap has-prefix">
+          <span class="input-prefix">R$</span>
+          <input type="number" id="valorConsulta" value="600" min="0" step="50" oninput="calcular()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Ticket Médio (Procedimento)</label>
+        <div class="input-wrap has-prefix">
+          <span class="input-prefix">R$</span>
+          <input type="number" id="ticketMedio" value="15000" min="0" step="500" oninput="calcular()">
+        </div>
+      </div>
+    </div>
+
+    <!-- CONVERSÃO (Simulação) -->
+    <div id="card-sim-conversao" class="card">
+      <div class="card-title"><span class="dot"></span>Conversão</div>
+
+      <div class="field">
+        <label>Taxa de Agendamento</label>
+        <div class="slider-row">
+          <input type="range" id="taxaAgendamento_range" min="1" max="100" value="10" oninput="syncSlider('taxaAgendamento')">
+          <div class="input-wrap has-suffix">
+            <input type="number" id="taxaAgendamento" value="10" min="1" max="100" step="1" oninput="syncRange('taxaAgendamento'); calcular()">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Comparecimento</label>
+        <div class="slider-row">
+          <input type="range" id="comparecimento_range" min="1" max="100" value="100" oninput="syncSlider('comparecimento')">
+          <div class="input-wrap has-suffix">
+            <input type="number" id="comparecimento" value="100" min="1" max="100" step="1" oninput="syncRange('comparecimento'); calcular()">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Fechamento</label>
+        <div class="slider-row">
+          <input type="range" id="fechamento_range" min="1" max="100" value="50" oninput="syncSlider('fechamento')">
+          <div class="input-wrap has-suffix">
+            <input type="number" id="fechamento" value="50" min="1" max="100" step="1" oninput="syncRange('fechamento'); calcular()">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNIL REAL (Análise) -->
+    <div id="card-real-funil" class="card" style="display:none">
+      <div class="card-title"><span class="dot"></span>Funil Real (do CRM)</div>
+
+      <div class="funil-real-inputs">
+
+        <div class="funil-real-step">
+          <div class="funil-real-step-icon">👥</div>
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Leads Qualificados</label>
+            <input type="number" id="r_leads_qualif" value="" min="0" step="1" placeholder="Ex: 200" oninput="calcular()">
+          </div>
+        </div>
+
+        <div class="funil-real-connector"><div class="arrow-down"></div></div>
+
+        <div class="funil-real-step">
+          <div class="funil-real-step-icon">📅</div>
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Agendamentos</label>
+            <input type="number" id="r_agendamentos" value="" min="0" step="1" placeholder="Ex: 20" oninput="calcular()">
+          </div>
+        </div>
+
+        <div class="funil-real-connector"><div class="arrow-down"></div></div>
+
+        <div class="funil-real-step">
+          <div class="funil-real-step-icon">🩺</div>
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Atendimentos (compareceram)</label>
+            <input type="number" id="r_atendimentos" value="" min="0" step="1" placeholder="Ex: 20" oninput="calcular()">
+          </div>
+        </div>
+
+        <div class="funil-real-connector"><div class="arrow-down"></div></div>
+
+        <div class="funil-real-step">
+          <div class="funil-real-step-icon">✅</div>
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>Vendas (fechamentos)</label>
+            <input type="number" id="r_vendas" value="" min="0" step="1" placeholder="Ex: 10" oninput="calcular()">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /inputs-col -->
+
+</div><!-- /layout -->
+
+<!-- ── BOTÃO PDF ── -->
+<div class="pdf-section">
+  <button class="pdf-btn" onclick="abrirModalPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14,2 14,8 20,8"/>
+      <line x1="12" y1="18" x2="12" y2="12"/>
+      <line x1="9" y1="15" x2="15" y2="15"/>
+    </svg>
+    Gerar Relatório PDF
+  </button>
+  <div class="pdf-hint">Exporta um dashboard completo para enviar por WhatsApp ou e-mail</div>
+</div>
+
+<!-- ── MODAL PDF ── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModalPDF()">×</button>
+    <h2>📄 Gerar Relatório</h2>
+    <div id="modal-form">
+      <div class="field">
+        <label>Nome da Clínica / Médico</label>
+        <input type="text" id="pdf-cliente" placeholder="Ex: Clínica Dr. Carlos Silva"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;font-weight:600;padding:10px 12px;outline:none;">
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="fecharModalPDF()">Cancelar</button>
+        <button class="modal-generate" onclick="gerarPDF()">Gerar PDF</button>
+      </div>
+    </div>
+    <div class="modal-generating" id="modal-generating">
+      Gerando relatório...<br><small>Aguarde alguns segundos</small>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER / CTA ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-cta-text">
+      Quer esse resultado<br>para <span>sua clínica</span>?
+    </div>
+    <div class="footer-cta-sub">Fale com a Elite Mídias e descubra como escalar seus resultados</div>
+
+    <a class="cta-btn"
+       href="https://wa.me/5521999468989?text=Olá!%20Quero%20saber%20como%20a%20Elite%20Mídias%20pode%20ajudar%20minha%20clínica!"
+       target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+      </svg>
+      Falar com um especialista
+    </a>
+
+    <div class="footer-links">
+      <a href="https://www.instagram.com/elitemidiasmkt" target="_blank" rel="noopener">@elitemidiasmkt</a>
+      <span style="color:var(--border)">·</span>
+      <a href="https://www.elitemidias.com.br" target="_blank" rel="noopener">www.elitemidias.com.br</a>
+      <span style="color:var(--border)">·</span>
+      <a href="tel:+5521999468989">(21) 99946-8989</a>
+    </div>
+
+    <div class="footer-copy">© 2025 Elite Mídias · Todos os direitos reservados</div>
+  </div>
+</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const num = id => parseFloat($(id).value) || 0;
+
+  let modoAtual = 'sim';
+
+  function setModo(modo) {
+    modoAtual = modo;
+    document.body.className = 'modo-' + modo;
+
+    $('btn-sim').classList.toggle('active', modo === 'sim');
+    $('btn-real').classList.toggle('active', modo === 'real');
+
+    /* campos de input */
+    $('sim-aquisicao').style.display    = modo === 'sim' ? 'block' : 'none';
+    $('real-aquisicao').style.display   = modo === 'real' ? 'block' : 'none';
+    $('card-sim-conversao').style.display = modo === 'sim' ? 'block' : 'none';
+    $('card-real-funil').style.display    = modo === 'real' ? 'block' : 'none';
+
+    /* labels dos resultados */
+    if (modo === 'sim') {
+      $('page-title').textContent   = 'Simule os resultados do seu funil';
+      $('result-badge').textContent = '📊 Projeção';
+      $('fat-label').textContent    = 'Faturamento Estimado';
+      $('roas-sub').textContent     = 'ROAS Projetado';
+    } else {
+      $('page-title').textContent   = 'Analise os resultados reais do seu funil';
+      $('result-badge').textContent = '📋 Dados Reais';
+      $('fat-label').textContent    = 'Faturamento Real';
+      $('roas-sub').textContent     = 'ROAS Real';
+    }
+
+    calcular();
+  }
+
+  /* ── Helpers ── */
+  function fmtBRL(v) {
+    return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtBRLShort(v) {
+    if (v >= 1e6) return 'R$ ' + (v / 1e6).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'M';
+    if (v >= 1e3) return 'R$ ' + (v / 1e3).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + 'k';
+    return fmtBRL(v);
+  }
+  function fmtInt(v) { return Math.round(v).toLocaleString('pt-BR'); }
+
+  function syncSlider(id) { $(id).value = $(id + '_range').value; calcular(); }
+  function syncRange(id) { const r = $(id + '_range'); if (r) r.value = $(id).value; }
+
+  /* ── Cálculo ── */
+  function calcular() {
+    const inv        = num('investimento');
+    const vConsulta  = num('valorConsulta');
+    const ticket     = num('ticketMedio');
+
+    let leadsTotal, leadsQualif, agendamentos, atendimentos, vendas, cplReal = 0;
+
+    if (modoAtual === 'sim') {
+      const cpl    = num('cpl') || 1;
+      const qualif = num('qualificacao') / 100;
+      leadsTotal   = inv / cpl;
+      leadsQualif  = leadsTotal * qualif;
+      agendamentos = leadsQualif * (num('taxaAgendamento') / 100);
+      atendimentos = agendamentos * (num('comparecimento') / 100);
+      vendas       = atendimentos * (num('fechamento') / 100);
+    } else {
+      leadsTotal   = num('r_leads');
+      leadsQualif  = num('r_leads_qualif');
+      agendamentos = num('r_agendamentos');
+      atendimentos = num('r_atendimentos');
+      vendas       = num('r_vendas');
+      cplReal      = leadsTotal > 0 ? inv / leadsTotal : 0;
+    }
+
+    const receitaConsultas = atendimentos * vConsulta;
+    const receitaProced    = vendas * ticket;
+    const faturamento      = receitaConsultas + receitaProced;
+
+    const cacLeadQual    = leadsQualif > 0   ? inv / leadsQualif   : 0;
+    const cacAgendamento = agendamentos > 0  ? inv / agendamentos  : 0;
+    const cacVendas      = vendas > 0        ? inv / vendas        : 0;
+    const roas           = inv > 0           ? faturamento / inv   : 0;
+
+    /* Outputs */
+    $('faturamento').textContent        = fmtBRL(faturamento);
+    $('receitaConsultas').textContent   = fmtBRLShort(receitaConsultas);
+    $('receitaProcedimentos').textContent = fmtBRLShort(receitaProced);
+    $('leadsTotal').textContent         = fmtInt(leadsTotal);
+    $('leadsQualif').textContent        = fmtInt(leadsQualif);
+    $('agendamentos').textContent       = fmtInt(agendamentos);
+    $('atendimentos').textContent       = fmtInt(atendimentos);
+    $('vendas').textContent             = fmtInt(vendas);
+    $('cacLeadQual').textContent        = fmtBRL(cacLeadQual);
+    $('cacAgendamento').textContent     = fmtBRL(cacAgendamento);
+    $('cacVendas').textContent          = fmtBRL(cacVendas);
+    $('cplReal').textContent            = fmtBRL(cplReal);
+
+    const roasEl   = $('roas');
+    const roasCard = $('roasCard');
+    roasEl.textContent = roas.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'x';
+
+    const isGood = roas >= 5, isOk = roas >= 2;
+    if (modoAtual === 'sim') {
+      roasCard.style.background   = isGood ? 'var(--gold-dim)' : isOk ? 'var(--gold-mid)' : 'var(--red-dim)';
+      roasCard.style.borderColor  = isGood ? 'var(--gold)'     : isOk ? 'var(--border-gold)' : 'var(--red)';
+      roasEl.style.color          = isGood ? 'var(--gold-bright)' : isOk ? 'var(--gold)' : 'var(--red)';
+    } else {
+      roasCard.style.background   = isGood ? 'var(--blue-dim)' : isOk ? 'var(--blue-mid)' : 'var(--red-dim)';
+      roasCard.style.borderColor  = isGood ? 'var(--blue)'     : isOk ? 'var(--border-blue)' : 'var(--red)';
+      roasEl.style.color          = isGood ? 'var(--blue-bright)' : isOk ? 'var(--blue)' : 'var(--red)';
+    }
+  }
+
+  calcular();
+
+  /* ── Período ── */
+  function calcularDias() {
+    const ini = $('r_data_inicio').value;
+    const fim = $('r_data_fim').value;
+    const el  = $('periodo-dias-label');
+    if (!ini || !fim) { el.textContent = 'Selecione as datas'; return; }
+    const d1 = new Date(ini), d2 = new Date(fim);
+    const dias = Math.round((d2 - d1) / 86400000);
+    if (dias < 0) { el.textContent = 'Data fim deve ser maior'; return; }
+    el.textContent = `Período: ${dias} dias`;
+  }
+
+  function getPeriodoLabel() {
+    const ini = $('r_data_inicio').value;
+    const fim = $('r_data_fim').value;
+    if (!ini || !fim) return '';
+    const fmt = v => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+    const d1 = new Date(ini), d2 = new Date(fim);
+    const dias = Math.round((d2 - d1) / 86400000);
+    return `${fmt(ini)} → ${fmt(fim)}  (${dias} dias)`;
+  }
+
+  /* ── Modal ── */
+  function abrirModalPDF() {
+    $('modal-overlay').classList.add('open');
+    $('modal-form').style.display = 'block';
+    $('modal-generating').style.display = 'none';
+  }
+  function fecharModalPDF() { $('modal-overlay').classList.remove('open'); }
+
+  /* ── Carrega jsPDF de múltiplos CDNs com fallback ── */
+  async function carregarJsPDF() {
+    if (window.jspdf) return true;
+    const cdns = [
+      'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+      'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+      'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js',
+    ];
+    for (const url of cdns) {
+      try {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = url;
+          s.onload = res;
+          s.onerror = () => { s.remove(); rej(); };
+          document.head.appendChild(s);
+        });
+        if (window.jspdf) return true;
+      } catch(e) { /* tenta próximo */ }
+    }
+    return false;
+  }
+
+  /* ── Geração do PDF ── */
+  async function gerarPDF() {
+    $('modal-form').style.display = 'none';
+    $('modal-generating').style.display = 'block';
+
+    const carregou = await carregarJsPDF();
+    if (!carregou || !window.jspdf) {
+      fecharModalPDF();
+      alert('Não foi possível carregar o gerador de PDF.\n\nVerifique sua conexão com a internet e tente novamente.');
+      return;
+    }
+
+    try {
+    const { jsPDF } = window.jspdf;
+    const cliente = $('pdf-cliente').value.trim() || 'Relatório de Performance';
+    const isReal  = modoAtual === 'real';
+
+    const dados = {
+      cliente,
+      periodo: isReal ? getPeriodoLabel() : '',
+      investimento:   num('investimento'),
+      faturamento:    $('faturamento').textContent,
+      recConsultas:   $('receitaConsultas').textContent,
+      recProced:      $('receitaProcedimentos').textContent,
+      leadsTotal:     $('leadsTotal').textContent,
+      leadsQualif:    $('leadsQualif').textContent,
+      agendamentos:   $('agendamentos').textContent,
+      atendimentos:   $('atendimentos').textContent,
+      vendas:         $('vendas').textContent,
+      cplReal:        isReal ? $('cplReal').textContent : null,
+      cacLeadQual:    $('cacLeadQual').textContent,
+      cacAgendamento: $('cacAgendamento').textContent,
+      cacVendas:      $('cacVendas').textContent,
+      roas:           $('roas').textContent,
+      valorConsulta:  num('valorConsulta'),
+      ticketMedio:    num('ticketMedio'),
+    };
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, H = 297;
+    const M = 16; // margem lateral
+    const CW = W - M*2; // largura útil
+
+    const ACCENT    = isReal ? [74,158,255]  : [212,160,23];
+    const ACCENT_BR = isReal ? [122,184,255] : [240,192,64];
+    const ACCENT_DIM= isReal ? [6,18,32]     : [26,20,0];
+    const ACCENT_BD = isReal ? [42,90,138]   : [184,149,42];
+    const BG   = [10,10,10];
+    const SURF = [17,17,17];
+    const SURF2= [26,26,26];
+    const BORD = [50,50,50];
+    const TEXT = [240,234,214];
+    const MUTED= [130,120,100];
+    const RED  = [217,79,79];
+
+    const F = (arr) => doc.setFillColor(...arr);
+    const D = (arr) => doc.setDrawColor(...arr);
+    const T = (arr) => doc.setTextColor(...arr);
+    const font = (sz, st='normal') => { doc.setFont('helvetica', st); doc.setFontSize(sz); };
+
+    function bg(x,y,w,h,fill) { F(fill); doc.rect(x,y,w,h,'F'); }
+    function card(x,y,w,h,fill,border,r=2) {
+      F(fill); D(border||fill);
+      doc.roundedRect(x,y,w,h,r,r, border?'FD':'F');
+    }
+    function ln(x1,y1,x2,y2,color,lw=0.3) {
+      doc.setLineWidth(lw); D(color); doc.line(x1,y1,x2,y2);
+    }
+    function t(text,x,y,color,sz,st='normal',align='left') {
+      font(sz,st); T(color); doc.text(String(text),x,y,{align});
+    }
+    function sectionHeader(lbl,x,y,w) {
+      bg(x,y,w,11,SURF2);
+      t(lbl.toUpperCase(), x+5, y+7.5, MUTED, 8, 'bold');
+    }
+    function metricCard(x,y,w,h,lbl,val,color) {
+      card(x,y,w,h,SURF2,BORD);
+      t(lbl.toUpperCase(), x+5, y+8, MUTED, 7.5, 'bold');
+      t(val, x+5, y+h-5, color||ACCENT, 13, 'bold');
+    }
+
+    /* ═══════════════════════════════════
+       PÁGINA 1
+    ═══════════════════════════════════ */
+    bg(0,0,W,H,BG);
+
+    /* — Header — */
+    const headerH = isReal && dados.periodo ? 66 : 58;
+    bg(0,0,W,headerH,SURF);
+    bg(0,0,W,2,ACCENT);
+
+    // Logo — quadrado maior, letra centralizada com melhor proporção
+    const logoSize = 18;
+    card(M, 10, logoSize, logoSize, ACCENT, null, 3);
+    t('E', M + logoSize/2, 10 + logoSize/2 + 4, BG, 14, 'bold', 'center');
+
+    // Textos ao lado do logo
+    t('ELITE MÍDIAS', M+logoSize+6, 17, ACCENT_BR, 12, 'bold');
+    t('Relatório de Performance', M+logoSize+6, 24, MUTED, 8.5);
+
+    // Badge modo (direita)
+    const badgeTxt = isReal ? 'ANÁLISE REAL' : 'SIMULAÇÃO';
+    const badgeW = 36;
+    card(W-M-badgeW, 11, badgeW, 13, ACCENT_DIM, ACCENT_BD, 2);
+    t(badgeTxt, W-M-badgeW/2, 19, ACCENT_BR, 7.5, 'bold', 'center');
+
+    // Nome cliente
+    t(dados.cliente, W/2, 40, [255,255,255], 20, 'bold', 'center');
+
+    // Datas — cada uma na sua linha, sem sobreposição
+    const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+    if (isReal && dados.periodo) {
+      t(dados.periodo, W/2, 51, MUTED, 8, 'normal', 'center');
+      t(`Gerado em ${hoje}`, W/2, 60, MUTED, 7.5, 'normal', 'center');
+    } else {
+      t(`Gerado em ${hoje}`, W/2, 51, MUTED, 8, 'normal', 'center');
+    }
+
+    /* — Badge de modo (como no mobile) — */
+    const badgeModoTxt = isReal ? '📋 Dados Reais' : '📊 Projeção';
+    font(8, 'bold');
+    const badgeModoW = doc.getTextWidth(badgeModoTxt) + 14;
+    const badgeModoY = headerH + 6;
+    card(W/2 - badgeModoW/2, badgeModoY, badgeModoW, 11, ACCENT_DIM, ACCENT_BD, 5);
+    t(badgeModoTxt, W/2, badgeModoY + 8, ACCENT_BR, 8, 'bold', 'center');
+
+    /* — Card Faturamento — */
+    const fatY = badgeModoY + 15;
+    const fatH = 52;
+    card(M, fatY, CW, fatH, ACCENT_DIM, ACCENT_BD, 3);
+    bg(M, fatY, CW, 2, ACCENT);
+
+    const fatLbl = isReal ? 'FATURAMENTO REAL' : 'FATURAMENTO ESTIMADO';
+    t(fatLbl, W/2, fatY+10, ACCENT, 9, 'bold', 'center');
+    t(dados.faturamento, W/2, fatY+30, ACCENT_BR, 26, 'bold', 'center');
+
+    ln(M+10, fatY+36, W-M-10, fatY+36, ACCENT_BD);
+
+    const subW2 = CW/2 - 10;
+    t('Receita de Consultas',  M+10+subW2/2,   fatY+43, MUTED, 8.5, 'normal', 'center');
+    t(dados.recConsultas,      M+10+subW2/2,   fatY+51, TEXT,  11,  'bold',   'center');
+    t('Receita de Procedimentos', M+10+subW2+10+subW2/2, fatY+43, MUTED, 8.5, 'normal', 'center');
+    t(dados.recProced,            M+10+subW2+10+subW2/2, fatY+51, TEXT,  11,  'bold',   'center');
+
+    /* — ROAS — */
+    const roasY = fatY + fatH + 6;
+    const roasNum = parseFloat(dados.roas);
+    const roasBg  = roasNum >= 5 ? ACCENT_DIM : roasNum >= 2 ? SURF2 : [42,15,15];
+    const roasBd  = roasNum >= 5 ? ACCENT_BD  : roasNum >= 2 ? BORD  : [140,50,50];
+    const roasClr = roasNum >= 5 ? ACCENT_BR  : roasNum >= 2 ? ACCENT : RED;
+    card(M, roasY, CW, 30, roasBg, roasBd, 3);
+    t(isReal ? 'ROAS REAL' : 'ROAS PROJETADO', M+6, roasY+10, MUTED, 9, 'bold');
+    t('Retorno sobre o Investimento', M+6, roasY+21, TEXT, 10, 'bold');
+    t(dados.roas, W-M-6, roasY+23, roasClr, 24, 'bold', 'right');
+
+    /* — Grid métricas (2 colunas, como no mobile) — */
+    const invY = roasY + 34;
+    const hCard = 26;
+    const hw = (CW-6)/2;
+
+    // Linha 1: Investimento + CPL Real (se real) ou Ticket Médio
+    metricCard(M,       invY, hw, hCard, 'Investimento em Anúncios', fmtBRLpdf(dados.investimento), ACCENT);
+    if (isReal && dados.cplReal) {
+      metricCard(M+hw+6, invY, hw, hCard, 'CPL Real', dados.cplReal, ACCENT);
+    } else {
+      metricCard(M+hw+6, invY, hw, hCard, 'Ticket Médio', fmtBRLpdf(dados.ticketMedio), ACCENT);
+    }
+
+    /* — Funil — */
+    const funilY = invY + hCard + 8;
+    sectionHeader('Funil de Conversão', M, funilY, CW);
+
+    const steps = [
+      {l:'Leads',    v:dados.leadsTotal},
+      {l:'Qualif.',  v:dados.leadsQualif},
+      {l:'Agenda.',  v:dados.agendamentos},
+      {l:'Atend.',   v:dados.atendimentos},
+      {l:'Vendas',   v:dados.vendas},
+    ];
+    // Funil com setas entre etapas (como no mobile)
+    const fH = 34;
+    const arrowW = 8;
+    const stepW2 = (CW - arrowW*(steps.length-1)) / steps.length;
+    card(M, funilY+11, CW, fH, SURF, BORD, 3);
+    steps.forEach((s,i) => {
+      const sx = M + i*(stepW2 + arrowW);
+      t(s.l.toUpperCase(), sx+stepW2/2, funilY+21, MUTED, 7, 'bold', 'center');
+      t(s.v, sx+stepW2/2, funilY+37, TEXT, 14, 'bold', 'center');
+      if (i < steps.length-1) {
+        t('›', sx+stepW2+arrowW/2, funilY+31, ACCENT, 14, 'bold', 'center');
+      }
+    });
+
+    /* — Rodapé P1 — */
+    ln(M, H-16, W-M, H-16, BORD);
+    t('Elite Mídias  ·  @elitemidiasmkt  ·  www.elitemidias.com.br  ·  (21) 99946-8989', W/2, H-9, MUTED, 7, 'normal', 'center');
+    t('1 / 2', W-M, H-9, MUTED, 7, 'normal', 'right');
+
+    /* ═══════════════════════════════════
+       PÁGINA 2
+    ═══════════════════════════════════ */
+    doc.addPage();
+    bg(0,0,W,H,BG);
+
+    /* — Header P2 — */
+    bg(0,0,W,24,SURF);
+    bg(0,0,W,2,ACCENT);
+    t('ELITE MÍDIAS', M, 14, ACCENT_BR, 10, 'bold');
+    t(`${dados.cliente}  —  Métricas de Custo & Eficiência`, W/2, 14, MUTED, 8, 'normal', 'center');
+    t('2 / 2', W-M, 14, MUTED, 8, 'normal', 'right');
+
+    /* — Grid CAC — */
+    const cY = 32;
+    const cW2 = (CW-8)/3;
+    const cH  = 30;
+    [
+      ['Custo / Lead Qualificado', dados.cacLeadQual],
+      ['CAC Agendamento',          dados.cacAgendamento],
+      ['CAC Vendas',               dados.cacVendas],
+    ].forEach(([lbl,val],i) => {
+      metricCard(M + i*(cW2+4), cY, cW2, cH, lbl, val, ACCENT);
+    });
+
+    /* — Barras de Conversão — */
+    const barSecY = cY + cH + 8;
+    sectionHeader('Taxas de Conversão por Etapa do Funil', M, barSecY, CW);
+
+    const barLabelW = 44;
+    const pctLabelW = 18;
+    const barW2     = CW - barLabelW - pctLabelW - 4;
+    const barH2     = 12;
+    const barGap    = 20;
+
+    [
+      {label:'Qualificação',   from:dados.leadsTotal,   to:dados.leadsQualif},
+      {label:'Agendamento',    from:dados.leadsQualif,  to:dados.agendamentos},
+      {label:'Comparecimento', from:dados.agendamentos, to:dados.atendimentos},
+      {label:'Fechamento',     from:dados.atendimentos, to:dados.vendas},
+    ].forEach((fd,i) => {
+      const by = barSecY + 13 + i*barGap;
+      const fromN = parseIntPdf(fd.from), toN = parseIntPdf(fd.to);
+      const pct   = fromN > 0 ? Math.min(toN/fromN, 1) : 0;
+      const pctTxt= fromN > 0 ? (pct*100).toFixed(1)+'%' : '—';
+      const fracTxt = `${fd.to} / ${fd.from}`;
+
+      t(fd.label, M, by+barH2/2+2, TEXT, 9, 'bold');
+      card(M+barLabelW, by, barW2, barH2, SURF2, null, 1.5);
+      if (pct > 0.005) {
+        F(ACCENT);
+        doc.roundedRect(M+barLabelW, by, Math.max(barW2*pct, 2), barH2, 1.5,1.5,'F');
+      }
+      // pct + fração juntos à direita da barra
+      t(pctTxt, M+barLabelW+barW2+4, by+barH2/2+2, ACCENT_BR, 9, 'bold');
+      t(fracTxt, W-M, by+barH2/2+2, MUTED, 8, 'normal', 'right');
+    });
+
+    /* — Resumo Financeiro — */
+    const sfY = barSecY + 10 + 4*barGap + 8;
+    sectionHeader('Resumo Financeiro', M, sfY, CW);
+
+    [
+      ['Investimento Total',        fmtBRLpdf(dados.investimento), false],
+      ['Receita de Consultas',      dados.recConsultas,            false],
+      ['Receita de Procedimentos',  dados.recProced,               false],
+      ['Faturamento Total',         dados.faturamento,             true ],
+    ].forEach(([lbl,val,isTotal],i) => {
+      const iy = sfY + 13 + i*16;
+      if (isTotal) ln(M, iy-3, W-M, iy-3, BORD, 0.4);
+      t(lbl, M+4, iy+4, isTotal ? TEXT : MUTED, isTotal ? 10 : 9, isTotal ? 'bold' : 'normal');
+      t(val, W-M-4, iy+4, isTotal ? ACCENT_BR : TEXT, isTotal ? 12 : 10, 'bold', 'right');
+    });
+
+    /* — Nota de período — */
+    if (isReal && dados.periodo) {
+      const noteY = sfY + 11 + 4*14 + 8;
+      card(M, noteY, CW, 18, SURF2, ACCENT_BD, 2);
+      t('PERÍODO DE ANÁLISE', M+6, noteY+7, ACCENT, 7.5, 'bold');
+      t(dados.periodo, M+6, noteY+14, MUTED, 8);
+    }
+
+    /* — Rodapé P2 — */
+    ln(M, H-16, W-M, H-16, BORD);
+    t('Elite Mídias  ·  @elitemidiasmkt  ·  www.elitemidias.com.br  ·  (21) 99946-8989', W/2, H-9, MUTED, 7, 'normal', 'center');
+    t('2 / 2', W-M, H-9, MUTED, 7, 'normal', 'right');
+
+    /* — Salva — */
+    const nomeArq = (dados.cliente||'relatorio').replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-').toLowerCase();
+    doc.save(`elite-midias-${nomeArq}-${new Date().toISOString().slice(0,10)}.pdf`);
+    fecharModalPDF();
+    } catch(e) {
+      fecharModalPDF();
+      alert('Erro ao gerar o PDF. Verifique sua conexão com a internet e tente novamente.\n\n' + e.message);
+    }
+  }
+
+  /* ── Helpers PDF ── */
+  function fmtBRLpdf(v) {
+    return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function parseValorBRL(str) { return str || 'R$ 0,00'; }
+  function parseIntPdf(str) {
+    if (!str || str === '0') return 0;
+    return parseInt(String(str).replace(/\./g,'').replace(',','.')) || 0;
+  }
+</script>
+
+</body>
+</html>
