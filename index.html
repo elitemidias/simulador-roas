@@ -57,11 +57,13 @@
       gap: 10px; margin-bottom: 16px;
     }
     .logo-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 18px; color: #0a0a0a;
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff;
     }
+    .logo-icon img { width: 52px; height: 52px; object-fit: contain; }
     .logo-text { font-size: 20px; font-weight: 800; letter-spacing: 1px; color: var(--gold-bright); }
     .gold-line {
       width: 60px; height: 2px;
@@ -433,6 +435,31 @@
     }
     input[type="date"]:focus { border-color: var(--blue); border-style: solid; }
 
+    /* ── Tooltips explicativos ── */
+    .field label { display: flex; align-items: center; gap: 6px; }
+    .tip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 9px; font-weight: 700;
+      cursor: help; position: relative; flex-shrink: 0;
+      font-style: normal;
+    }
+    .tip::after {
+      content: attr(data-tip);
+      position: absolute; bottom: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%);
+      background: #222; color: #f0ead6;
+      font-size: 11px; font-weight: 400; line-height: 1.4;
+      padding: 8px 12px; border-radius: 8px;
+      width: 220px; white-space: normal; text-align: left;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4);
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+      z-index: 100;
+    }
+    .tip:hover::after { opacity: 1; }
+
     /* ── Botão Gerar PDF ── */
     .pdf-section {
       max-width: 1100px; margin: 32px auto 0;
@@ -540,7 +567,9 @@
 <!-- ── HEADER ── -->
 <header>
   <div class="logo-wrap">
-    <div class="logo-icon">E</div>
+    <div class="logo-icon">
+      <img src="images/Logo Elite Midias (3).png" alt="Elite Mídias" />
+    </div>
     <div class="logo-text">ELITE MÍDIAS</div>
   </div>
   <div class="gold-line"></div>
@@ -659,7 +688,7 @@
       <div class="card-title"><span class="dot"></span>Aquisição</div>
 
       <div class="field">
-        <label>Investimento em Anúncios</label>
+        <label>Investimento em Anúncios <i class="tip" data-tip="Valor total gasto em Google Ads, Meta Ads ou outras plataformas no período.">?</i></label>
         <div class="input-wrap has-prefix">
           <span class="input-prefix">R$</span>
           <input type="number" id="investimento" value="10000" min="0" step="100" oninput="calcular()">
@@ -710,7 +739,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Leads Totais Gerados</label>
+          <label>Leads Totais Gerados <i class="tip" data-tip="Quantas pessoas clicaram no seu anúncio e deixaram o contato (nome + telefone/WhatsApp).">?</i></label>
           <div class="input-wrap">
             <input type="number" id="r_leads" value="" min="0" step="1" placeholder="Ex: 1000 leads" oninput="calcular()">
           </div>
@@ -723,14 +752,14 @@
       <div class="card-title"><span class="dot"></span>Comercial</div>
 
       <div class="field">
-        <label>Valor da Consulta</label>
+        <label>Valor da Consulta <i class="tip" data-tip="Quanto o paciente paga na consulta inicial, antes do procedimento. Ex: R$ 300.">?</i></label>
         <div class="input-wrap has-prefix">
           <span class="input-prefix">R$</span>
           <input type="number" id="valorConsulta" value="600" min="0" step="50" oninput="calcular()">
         </div>
       </div>
       <div class="field">
-        <label>Ticket Médio (Procedimento)</label>
+        <label>Ticket Médio (Procedimento) <i class="tip" data-tip="Valor médio que o paciente paga pelo procedimento principal vendido. Ex: R$ 2.500 por botox ou harmonização.">?</i></label>
         <div class="input-wrap has-prefix">
           <span class="input-prefix">R$</span>
           <input type="number" id="ticketMedio" value="15000" min="0" step="500" oninput="calcular()">
@@ -783,7 +812,7 @@
         <div class="funil-real-step">
           <div class="funil-real-step-icon">👥</div>
           <div class="field" style="flex:1;margin-bottom:0">
-            <label>Leads Qualificados</label>
+            <label>Leads Qualificados <i class="tip" data-tip="Leads que foram contactados e mostraram interesse real. Normalmente 10% a 30% do total.">?</i></label>
             <input type="number" id="r_leads_qualif" value="" min="0" step="1" placeholder="Ex: 200" oninput="calcular()">
           </div>
         </div>
@@ -1138,8 +1167,8 @@
     }
     function metricCard(x,y,w,h,lbl,val,color) {
       card(x,y,w,h,SURF2,BORD);
-      t(lbl.toUpperCase(), x+5, y+8, MUTED, 7.5, 'bold');
-      t(val, x+5, y+h-5, color||ACCENT, 13, 'bold');
+      t(lbl.toUpperCase(), x+5, y+9, MUTED, 8, 'bold');
+      t(val, x+5, y+h-5, color||ACCENT, 15, 'bold');
     }
 
     /* ═══════════════════════════════════
@@ -1152,10 +1181,29 @@
     bg(0,0,W,headerH,SURF);
     bg(0,0,W,2,ACCENT);
 
-    // Logo — quadrado maior, letra centralizada com melhor proporção
+    // Logo — imagem real
+    try {
+      const logoImg = new Image();
+      logoImg.src = 'images/Logo Elite Midias (3).png';
+      await new Promise((res) => {
+        logoImg.onload = res;
+        logoImg.onerror = res;
+        setTimeout(res, 800);
+      });
+      if (logoImg.complete && logoImg.naturalWidth > 0) {
+        const canvas = document.createElement('canvas');
+        canvas.width = logoImg.naturalWidth;
+        canvas.height = logoImg.naturalHeight;
+        canvas.getContext('2d').drawImage(logoImg, 0, 0);
+        const imgData = canvas.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', M, 8, 18, 18);
+      }
+    } catch(e) {
+      // fallback: quadrado dourado com E
+      card(M, 10, 18, 18, ACCENT, null, 3);
+      t('E', M+9, 22, BG, 14, 'bold', 'center');
+    }
     const logoSize = 18;
-    card(M, 10, logoSize, logoSize, ACCENT, null, 3);
-    t('E', M + logoSize/2, 10 + logoSize/2 + 4, BG, 14, 'bold', 'center');
 
     // Textos ao lado do logo
     t('ELITE MÍDIAS', M+logoSize+6, 17, ACCENT_BR, 12, 'bold');
@@ -1247,10 +1295,10 @@
     card(M, funilY+11, CW, fH, SURF, BORD, 3);
     steps.forEach((s,i) => {
       const sx = M + i*(stepW2 + arrowW);
-      t(s.l.toUpperCase(), sx+stepW2/2, funilY+21, MUTED, 7, 'bold', 'center');
-      t(s.v, sx+stepW2/2, funilY+37, TEXT, 14, 'bold', 'center');
+      t(s.l.toUpperCase(), sx+stepW2/2, funilY+22, MUTED, 8, 'bold', 'center');
+      t(s.v, sx+stepW2/2, funilY+38, TEXT, 16, 'bold', 'center');
       if (i < steps.length-1) {
-        t('>', sx+stepW2+arrowW/2, funilY+32, ACCENT, 11, 'bold', 'center');
+        t('>', sx+stepW2+arrowW/2, funilY+33, ACCENT, 12, 'bold', 'center');
       }
     });
 
@@ -1288,33 +1336,38 @@
     const barSecY = cY + cH + 8;
     sectionHeader('Taxas de Conversão por Etapa do Funil', M, barSecY, CW);
 
-    const barLabelW = 44;
-    const pctLabelW = 18;
-    const barW2     = CW - barLabelW - pctLabelW - 4;
-    const barH2     = 12;
-    const barGap    = 20;
+    const barLabelW = 46;  // largura da coluna de label (ex: "Qualificação")
+    const fracW     = 24;  // largura da coluna de fração (ex: "30 / 200")
+    const pctW      = 22;  // largura da coluna de % (ex: "15.0%")
+    const barW2     = CW - barLabelW - fracW - pctW - 8;
+    const barH2     = 13;
+    const barGap    = 22;
 
     [
-      {label:'Qualificação',   from:dados.leadsTotal,   to:dados.leadsQualif},
+      {label:'Qualificacao',   from:dados.leadsTotal,   to:dados.leadsQualif},
       {label:'Agendamento',    from:dados.leadsQualif,  to:dados.agendamentos},
       {label:'Comparecimento', from:dados.agendamentos, to:dados.atendimentos},
       {label:'Fechamento',     from:dados.atendimentos, to:dados.vendas},
     ].forEach((fd,i) => {
-      const by = barSecY + 13 + i*barGap;
+      const by = barSecY + 14 + i*barGap;
       const fromN = parseIntPdf(fd.from), toN = parseIntPdf(fd.to);
       const pct   = fromN > 0 ? Math.min(toN/fromN, 1) : 0;
-      const pctTxt= fromN > 0 ? (pct*100).toFixed(1)+'%' : '—';
+      const pctTxt= fromN > 0 ? (pct*100).toFixed(1)+'%' : '-';
       const fracTxt = `${fd.to} / ${fd.from}`;
 
-      t(fd.label, M, by+barH2/2+2, TEXT, 9, 'bold');
-      card(M+barLabelW, by, barW2, barH2, SURF2, null, 1.5);
+      // Label (esquerda)
+      t(fd.label, M, by+barH2/2+3, TEXT, 9, 'bold');
+      // Barra de progresso
+      const barX = M + barLabelW;
+      card(barX, by, barW2, barH2, SURF2, null, 2);
       if (pct > 0.005) {
         F(ACCENT);
-        doc.roundedRect(M+barLabelW, by, Math.max(barW2*pct, 2), barH2, 1.5,1.5,'F');
+        doc.roundedRect(barX, by, Math.max(barW2*pct, 3), barH2, 2, 2, 'F');
       }
-      // pct + fração juntos à direita da barra
-      t(pctTxt, M+barLabelW+barW2+4, by+barH2/2+2, ACCENT_BR, 9, 'bold');
-      t(fracTxt, W-M, by+barH2/2+2, MUTED, 8, 'normal', 'right');
+      // % — coluna própria, logo após a barra
+      t(pctTxt, barX + barW2 + 4, by+barH2/2+3, ACCENT_BR, 9, 'bold');
+      // fração — coluna própria, extrema direita
+      t(fracTxt, W-M, by+barH2/2+3, MUTED, 8, 'normal', 'right');
     });
 
     /* — Resumo Financeiro — */
