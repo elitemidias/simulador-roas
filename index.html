@@ -973,6 +973,9 @@
     const cacVendas      = vendas > 0        ? inv / vendas        : 0;
     const roas           = inv > 0           ? faturamento / inv   : 0;
 
+    /* Guarda valores brutos para o PDF usar sem abreviação */
+    window._pdfDados = { receitaConsultas, receitaProced };
+
     /* Outputs */
     $('faturamento').textContent        = fmtBRL(faturamento);
     $('receitaConsultas').textContent   = fmtBRLShort(receitaConsultas);
@@ -1024,7 +1027,7 @@
     const fmt = v => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
     const d1 = new Date(ini), d2 = new Date(fim);
     const dias = Math.round((d2 - d1) / 86400000);
-    return `${fmt(ini)} → ${fmt(fim)}  (${dias} dias)`;
+    return `${fmt(ini)} a ${fmt(fim)}  (${dias} dias)`;
   }
 
   /* ── Modal ── */
@@ -1080,8 +1083,8 @@
       periodo: isReal ? getPeriodoLabel() : '',
       investimento:   num('investimento'),
       faturamento:    $('faturamento').textContent,
-      recConsultas:   $('receitaConsultas').textContent,
-      recProced:      $('receitaProcedimentos').textContent,
+      recConsultas:   fmtBRLpdf((window._pdfDados||{}).receitaConsultas || 0),
+      recProced:      fmtBRLpdf((window._pdfDados||{}).receitaProced    || 0),
       leadsTotal:     $('leadsTotal').textContent,
       leadsQualif:    $('leadsQualif').textContent,
       agendamentos:   $('agendamentos').textContent,
@@ -1177,12 +1180,12 @@
     }
 
     /* — Badge de modo (como no mobile) — */
-    const badgeModoTxt = isReal ? '📋 Dados Reais' : '📊 Projeção';
-    font(8, 'bold');
-    const badgeModoW = doc.getTextWidth(badgeModoTxt) + 14;
+    const badgeModoTxt = isReal ? 'Dados Reais' : 'Projecao';
+    font(9, 'bold');
+    const badgeModoW = doc.getTextWidth(badgeModoTxt) + 18;
     const badgeModoY = headerH + 6;
-    card(W/2 - badgeModoW/2, badgeModoY, badgeModoW, 11, ACCENT_DIM, ACCENT_BD, 5);
-    t(badgeModoTxt, W/2, badgeModoY + 8, ACCENT_BR, 8, 'bold', 'center');
+    card(W/2 - badgeModoW/2, badgeModoY, badgeModoW, 12, ACCENT_DIM, ACCENT_BD, 5);
+    t(badgeModoTxt, W/2, badgeModoY + 8.5, ACCENT_BR, 9, 'bold', 'center');
 
     /* — Card Faturamento — */
     const fatY = badgeModoY + 15;
@@ -1247,7 +1250,7 @@
       t(s.l.toUpperCase(), sx+stepW2/2, funilY+21, MUTED, 7, 'bold', 'center');
       t(s.v, sx+stepW2/2, funilY+37, TEXT, 14, 'bold', 'center');
       if (i < steps.length-1) {
-        t('›', sx+stepW2+arrowW/2, funilY+31, ACCENT, 14, 'bold', 'center');
+        t('>', sx+stepW2+arrowW/2, funilY+32, ACCENT, 11, 'bold', 'center');
       }
     });
 
