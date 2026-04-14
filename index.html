@@ -1167,8 +1167,8 @@
     }
     function metricCard(x,y,w,h,lbl,val,color) {
       card(x,y,w,h,SURF2,BORD);
-      t(lbl.toUpperCase(), x+5, y+9, MUTED, 8, 'bold');
-      t(val, x+5, y+h-5, color||ACCENT, 15, 'bold');
+      t(lbl.toUpperCase(), x+5, y+10, MUTED, 8, 'bold');
+      t(val, x+5, y+h-7, color||ACCENT, 17, 'bold');
     }
 
     /* ═══════════════════════════════════
@@ -1264,41 +1264,45 @@
     t('Retorno sobre o Investimento', M+6, roasY+21, TEXT, 10, 'bold');
     t(dados.roas, W-M-6, roasY+23, roasClr, 24, 'bold', 'right');
 
-    /* — Grid métricas (2 colunas, como no mobile) — */
-    const invY = roasY + 34;
-    const hCard = 26;
+    /* — Grid métricas (2 colunas) — */
+    const invY = roasY + 36;
+    const hCard = 34;
     const hw = (CW-6)/2;
 
-    // Linha 1: Investimento + CPL Real (se real) ou Ticket Médio
     metricCard(M,       invY, hw, hCard, 'Investimento em Anúncios', fmtBRLpdf(dados.investimento), ACCENT);
     if (isReal && dados.cplReal) {
       metricCard(M+hw+6, invY, hw, hCard, 'CPL Real', dados.cplReal, ACCENT);
     } else {
-      metricCard(M+hw+6, invY, hw, hCard, 'Ticket Médio', fmtBRLpdf(dados.ticketMedio), ACCENT);
+      metricCard(M+hw+6, invY, hw, hCard, 'Ticket Medio', fmtBRLpdf(dados.ticketMedio), ACCENT);
     }
 
-    /* — Funil — */
-    const funilY = invY + hCard + 8;
-    sectionHeader('Funil de Conversão', M, funilY, CW);
+    /* — Funil — redesenhado em layout horizontal compacto — */
+    const funilY = invY + hCard + 10;
+    sectionHeader('Funil de Conversao', M, funilY, CW);
 
     const steps = [
-      {l:'Leads',    v:dados.leadsTotal},
-      {l:'Qualif.',  v:dados.leadsQualif},
-      {l:'Agenda.',  v:dados.agendamentos},
-      {l:'Atend.',   v:dados.atendimentos},
-      {l:'Vendas',   v:dados.vendas},
+      {l:'LEADS',    v:dados.leadsTotal},
+      {l:'QUALIF.',  v:dados.leadsQualif},
+      {l:'AGENDA.',  v:dados.agendamentos},
+      {l:'ATEND.',   v:dados.atendimentos},
+      {l:'VENDAS',   v:dados.vendas},
     ];
-    // Funil com setas entre etapas (como no mobile)
-    const fH = 34;
-    const arrowW = 8;
+    const fH = 42;
+    const arrowW = 6;
     const stepW2 = (CW - arrowW*(steps.length-1)) / steps.length;
-    card(M, funilY+11, CW, fH, SURF, BORD, 3);
+    card(M, funilY+12, CW, fH, SURF, BORD, 3);
     steps.forEach((s,i) => {
       const sx = M + i*(stepW2 + arrowW);
-      t(s.l.toUpperCase(), sx+stepW2/2, funilY+22, MUTED, 8, 'bold', 'center');
-      t(s.v, sx+stepW2/2, funilY+38, TEXT, 16, 'bold', 'center');
+      const cx = sx + stepW2/2;
+      // separador vertical entre steps (exceto primeiro)
+      if (i > 0) {
+        ln(sx-1, funilY+16, sx-1, funilY+12+fH-4, BORD, 0.3);
+      }
+      t(s.l, cx, funilY+23, MUTED, 7.5, 'bold', 'center');
+      t(String(s.v), cx, funilY+42, TEXT, 18, 'bold', 'center');
       if (i < steps.length-1) {
-        t('>', sx+stepW2+arrowW/2, funilY+33, ACCENT, 12, 'bold', 'center');
+        // seta triangular com linha
+        t('>', sx+stepW2+arrowW/2-1, funilY+35, ACCENT, 10, 'bold', 'center');
       }
     });
 
@@ -1321,9 +1325,9 @@
     t('2 / 2', W-M, 14, MUTED, 8, 'normal', 'right');
 
     /* — Grid CAC — */
-    const cY = 32;
+    const cY = 30;
     const cW2 = (CW-8)/3;
-    const cH  = 30;
+    const cH  = 34;
     [
       ['Custo / Lead Qualificado', dados.cacLeadQual],
       ['CAC Agendamento',          dados.cacAgendamento],
@@ -1334,14 +1338,12 @@
 
     /* — Barras de Conversão — */
     const barSecY = cY + cH + 8;
-    sectionHeader('Taxas de Conversão por Etapa do Funil', M, barSecY, CW);
+    sectionHeader('Taxas de Conversao por Etapa do Funil', M, barSecY, CW);
 
-    const barLabelW = 46;  // largura da coluna de label (ex: "Qualificação")
-    const fracW     = 24;  // largura da coluna de fração (ex: "30 / 200")
-    const pctW      = 22;  // largura da coluna de % (ex: "15.0%")
-    const barW2     = CW - barLabelW - fracW - pctW - 8;
-    const barH2     = 13;
-    const barGap    = 22;
+    const barLabelW = 44;
+    const barW2     = CW - barLabelW - 42; // 42 reservado para pct + frac
+    const barH2     = 11;
+    const barGap    = 16; // compacto
 
     [
       {label:'Qualificacao',   from:dados.leadsTotal,   to:dados.leadsQualif},
@@ -1349,29 +1351,27 @@
       {label:'Comparecimento', from:dados.agendamentos, to:dados.atendimentos},
       {label:'Fechamento',     from:dados.atendimentos, to:dados.vendas},
     ].forEach((fd,i) => {
-      const by = barSecY + 14 + i*barGap;
+      const by = barSecY + 13 + i*barGap;
       const fromN = parseIntPdf(fd.from), toN = parseIntPdf(fd.to);
       const pct   = fromN > 0 ? Math.min(toN/fromN, 1) : 0;
       const pctTxt= fromN > 0 ? (pct*100).toFixed(1)+'%' : '-';
       const fracTxt = `${fd.to} / ${fd.from}`;
 
-      // Label (esquerda)
       t(fd.label, M, by+barH2/2+3, TEXT, 9, 'bold');
-      // Barra de progresso
       const barX = M + barLabelW;
       card(barX, by, barW2, barH2, SURF2, null, 2);
       if (pct > 0.005) {
         F(ACCENT);
         doc.roundedRect(barX, by, Math.max(barW2*pct, 3), barH2, 2, 2, 'F');
       }
-      // % — coluna própria, logo após a barra
-      t(pctTxt, barX + barW2 + 4, by+barH2/2+3, ACCENT_BR, 9, 'bold');
-      // fração — coluna própria, extrema direita
+      // pct imediatamente após a barra
+      t(pctTxt, barX + barW2 + 3, by+barH2/2+3, ACCENT_BR, 9, 'bold');
+      // fração alinhada na direita
       t(fracTxt, W-M, by+barH2/2+3, MUTED, 8, 'normal', 'right');
     });
 
     /* — Resumo Financeiro — */
-    const sfY = barSecY + 10 + 4*barGap + 8;
+    const sfY = barSecY + 14 + 4*barGap;
     sectionHeader('Resumo Financeiro', M, sfY, CW);
 
     [
@@ -1380,8 +1380,8 @@
       ['Receita de Procedimentos',  dados.recProced,               false],
       ['Faturamento Total',         dados.faturamento,             true ],
     ].forEach(([lbl,val,isTotal],i) => {
-      const iy = sfY + 13 + i*16;
-      if (isTotal) ln(M, iy-3, W-M, iy-3, BORD, 0.4);
+      const iy = sfY + 12 + i*13;
+      if (isTotal) ln(M, iy-2, W-M, iy-2, BORD, 0.4);
       t(lbl, M+4, iy+4, isTotal ? TEXT : MUTED, isTotal ? 10 : 9, isTotal ? 'bold' : 'normal');
       t(val, W-M-4, iy+4, isTotal ? ACCENT_BR : TEXT, isTotal ? 12 : 10, 'bold', 'right');
     });
